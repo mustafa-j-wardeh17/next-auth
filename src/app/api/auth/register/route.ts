@@ -3,6 +3,7 @@ import { connectToDatabase } from '@/lib/database';
 import bcrypt from 'bcrypt';
 import User from '@/lib/database/models/user.model';
 import { NextResponse } from 'next/server';
+import { signIn } from 'next-auth/react';
 
 export async function POST(request: Request) {
     try {
@@ -44,6 +45,7 @@ export async function POST(request: Request) {
             },
             { status: 201 }
         );
+
     } catch (error: any) {
         console.error('Error during user registration:', error);  // Log the error for debugging
         return NextResponse.json(

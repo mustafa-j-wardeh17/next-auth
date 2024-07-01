@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button"
 import {
     Form,
     FormControl,
-    FormDescription,
     FormField,
     FormItem,
     FormLabel,
@@ -16,10 +15,8 @@ import { z } from "zod"
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import Link from 'next/link'
-import { toast } from 'sonner'
-import { register } from '@/lib/database/actions/user'
-import { redirect, useRouter } from 'next/navigation'
-import { signIn, useSession } from 'next-auth/react'
+import { useRouter } from 'next/navigation'
+import { signIn } from 'next-auth/react'
 
 const formSchema = z.object({
     firstName: z.string().min(2).max(15),
@@ -66,7 +63,7 @@ const RegisterForm = () => {
     })
     // 2. Define a submit handler.
     async function onSubmit(values: z.infer<typeof formSchema>) {
-
+        // for Register I must create a api file 
         const response = await fetch("/api/auth/register", {
             method: "POST",
             body: JSON.stringify(values)
@@ -78,14 +75,23 @@ const RegisterForm = () => {
             setError(data.message)
             return
         }
-        setError("")
-        route.push('/')
+        const result = await signIn("credentials", {
+            redirect: false,
+            email: values.email,
+            password: values.password,
+        });
+
+        if (result?.error) {
+            return () => setError(result?.error as string);
+        }
+        else {
+            route.push('/')
+        }
     }
 
     return (
         <Form {...form}>
             <form
-                action={register}
                 onSubmit={form.handleSubmit(onSubmit)}
                 className="space-y-4 border px-6 py-8 rounded-xl shadow-sm shadow-slate-500"
             >

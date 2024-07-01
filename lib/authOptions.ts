@@ -34,7 +34,7 @@ export const authOptions: NextAuthOptions = {
 
         const bcrypt = require("bcrypt");
 
-        const passwordCorrect = await bcrypt.compare(credentials?.password,user?.password );
+        const passwordCorrect = await bcrypt.compare(credentials?.password, user?.password);
 
         if (passwordCorrect) {
           return {
@@ -53,15 +53,16 @@ export const authOptions: NextAuthOptions = {
       await connectToDatabase();
 
       if (account?.provider === 'github' || account?.provider === 'google') {
-        const existingUser = await User.findOne({ email: profile?.email });
+        const existingUser = await User.findOne({ email: account?.provider === 'google' ? profile?.email : profile?.login });
         if (existingUser) {
           return true;
         } else {
           const newUser = new User({
             firstName: profile?.given_name || profile?.name?.split(' ')[0] || '',
             lastName: profile?.family_name || profile?.name?.split(' ')[1] || '',
-            email: profile?.email||profile?.login,
+            email: profile?.email || profile?.login,
             image: profile?.picture || profile?.avatar_url || '',
+            role: account?.provider === 'github' ? 'github' : 'google',
             authProviderId: account.providerAccountId,
           });
           await newUser.save();

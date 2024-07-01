@@ -2,15 +2,12 @@
 import { Button } from '@/components/ui/button'
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
-import { connectToDatabase } from '@/lib/database';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { error } from 'console';
-import { signIn, useSession } from 'next-auth/react';
+import { signIn,  } from 'next-auth/react';
 import Link from 'next/link'
-import { redirect, useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import React, { useState } from 'react'
 import { useForm } from 'react-hook-form';
-import { toast } from 'sonner';
 import { z } from "zod"
 
 const formSchema = z.object({
@@ -40,16 +37,14 @@ const LoginForm = () => {
 
     async function onSubmit(values: z.infer<typeof formSchema>) {
         const result = await signIn("credentials", {
-            redirect: false,
+            redirect: true,
             email:values.email,
             password:values.password,
           });
       
           if (result?.error) {
             setError(result?.error);
-          } else {
-            window.location.href = "/";
-          }
+          } 
     }
 
 
