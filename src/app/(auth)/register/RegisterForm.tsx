@@ -1,6 +1,6 @@
 "use client"
 
-import React from 'react'
+import React, { useState } from 'react'
 import { Button } from "@/components/ui/button"
 import {
     Form,
@@ -18,7 +18,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import Link from 'next/link'
 import { toast } from 'sonner'
 import { register } from '@/lib/database/actions/user'
-import { redirect } from 'next/navigation'
+import { redirect, useRouter } from 'next/navigation'
 import { signIn, useSession } from 'next-auth/react'
 
 const formSchema = z.object({
@@ -56,13 +56,14 @@ const formSchema = z.object({
 
 
 const RegisterForm = () => {
+    const route = useRouter()
+    const [error, setError] = useState<string>("")
 
     // 1. Define your form.
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
         defaultValues: {},
     })
-
     // 2. Define a submit handler.
     async function onSubmit(values: z.infer<typeof formSchema>) {
 
@@ -71,16 +72,16 @@ const RegisterForm = () => {
             body: JSON.stringify(values)
         })
         const data = await response.json()
-        if (data.error) {
-            toast.error(data.error)
-        }
 
-        toast.success("Account created successfully")
-        console.log(values)
+
+        if (response.status !== 201) {
+            setError(data.message)
+            return
+        }
+        setError("")
+        route.push('/')
     }
-    const { data: session } = useSession();
-    const user = session?.user;
-    if (user) redirect("/");
+
     return (
         <Form {...form}>
             <form
@@ -170,6 +171,11 @@ const RegisterForm = () => {
                         </FormItem>
                     )}
                 />
+                {
+                    error && (
+                        <p className='text-red-500'>{error}</p>
+                    )
+                }
                 <div className='flex justify-center'>
                     <Button type="submit" className='w-full'>Sign up</Button>
                 </div>
@@ -180,6 +186,7 @@ const RegisterForm = () => {
                 <div className='flex justify-center'>
                     <Button onClick={() => signIn('google')} type='button' className='w-full bg-transparent border hover:bg-neutral-900 text-white'>Sign Up with Google</Button>
                 </div>
+
                 <div className="mt-4 text-center text-sm">
                     Already have an account?{" "}
                     <Link href="/login" className="underline">

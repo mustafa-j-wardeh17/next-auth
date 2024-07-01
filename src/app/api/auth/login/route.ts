@@ -1,52 +1,31 @@
-import { connectToDatabase } from '@/lib/database';
-import bcrypt from 'bcrypt';
-import User from '@/lib/database/models/user.model';
-import { NextResponse } from 'next/server';
+// pages/api/auth/login.js
+import { NextApiRequest, NextApiResponse } from "next";
+import { getSession, signIn } from "next-auth/react";
 
-export async function POST(request: Request) {
-    try {
-        console.log('Connecting to database...');
-        await connectToDatabase();  // Ensure connection to the database
+export default async (req: NextApiRequest, res: NextApiResponse) => {
+    const session = await getSession({ req });
 
-        console.log('Parsing request body...');
-        const { email, password } = await request.json();
-
-        console.log('Checking if user already exists...');
-        const findUser = await User.findOne({ email });
-        if (!findUser) {
-            return NextResponse.json(
-                { message: "Oops: Email or Password did't match" },
-                { status: 400 }
-            );
-        }
-
-
-        const isMatched = await bcrypt.compare(findUser.password,password );
-
-        if(isMatched){
-            return NextResponse.json(
-                {
-                    message: "User created successfully",
-                    data: {
-                        id: findUser._id,
-                        email: findUser.email
-                    }
-                },
-                { status: 201 }
-            );
-        }else{
-            return NextResponse.json(
-                { message: "Oops: Email or Password did't match" },
-                { status: 400 }
-            );
-        }
-
-
-    } catch (error: any) {
-        console.error('Error during user signing in:', error);  // Log the error for debugging
-        return NextResponse.json(
-            { message: error.message },
-            { status: 500 }
-        );
+    if (session) {
+        // If the user is already logged in, redirect them
+        res.redirect("/");
+        return;
     }
-}
+
+    if (req.method === "POST") {
+        const { email, password } = req.body;
+
+        const result = await signIn("credentials", {
+            redirect: false,
+            email,
+            password,
+        });
+
+        if (result?.error) {
+            res.status(401).json({ message: result.error });
+        } else {
+            res.status(200).json({ message: "Logged in successfully" });
+        }
+    } else {
+        res.status(405).json({ message: "Method not allowed" });
+    }
+};

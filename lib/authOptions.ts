@@ -34,19 +34,16 @@ export const authOptions: NextAuthOptions = {
 
         const bcrypt = require("bcrypt");
 
-        const passwordCorrect = await bcrypt.compare(
-          credentials?.password,
-          user?.password
-        );
+        const passwordCorrect = await bcrypt.compare(credentials?.password,user?.password );
 
         if (passwordCorrect) {
           return {
-            id: user?._id,
+            id: user?._id.toString(),
             email: user?.email,
           };
         }
 
-        console.log("credentials", credentials);
+        console.log("==========>credentials", credentials);
         return null;
       },
     }),

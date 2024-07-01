@@ -7,8 +7,8 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { error } from 'console';
 import { signIn, useSession } from 'next-auth/react';
 import Link from 'next/link'
-import { redirect } from 'next/navigation';
-import React from 'react'
+import { redirect, useRouter } from 'next/navigation';
+import React, { useState } from 'react'
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from "zod"
@@ -29,33 +29,30 @@ const formSchema = z.object({
         max(30),
 })
 const LoginForm = () => {
+    const route = useRouter()
+    const [error, setError] = useState<string>("")
+
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
         defaultValues: {
-            email: "",
-            password: ""
         },
     })
 
     async function onSubmit(values: z.infer<typeof formSchema>) {
-
-        const response = await fetch("/api/auth/login", {
-            method: "POST",
-            body: JSON.stringify(values)
-        })
-        const data = await response.json()
-        if (data.error) {
-            toast.error(data.error)
-            console.log('=======>Error',data.error)
-        }
-
-        toast.success("Account created successfully")
-        console.log(values)
+        const result = await signIn("credentials", {
+            redirect: false,
+            email:values.email,
+            password:values.password,
+          });
+      
+          if (result?.error) {
+            setError(result?.error);
+          } else {
+            window.location.href = "/";
+          }
     }
 
-    const { data: session } = useSession();
-    const user = session?.user;
-    if (user) redirect("/");
+
     return (
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)}
@@ -98,6 +95,11 @@ const LoginForm = () => {
                         </FormItem>
                     )}
                 />
+                {
+                    error && (
+                        <p className='text-red-500'>{error}</p>
+                    )
+                }
                 <div className='flex justify-center'>
                     <Button type="submit" className='w-full'>Submit</Button>
                 </div>
